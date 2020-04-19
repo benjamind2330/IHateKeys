@@ -1,3 +1,5 @@
+#pragma once
+
 #include "pin_control.h"
 
 namespace hardware
