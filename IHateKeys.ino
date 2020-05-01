@@ -7,9 +7,9 @@
 
 using namespace hardware;
 
-TricolourControl<15, 4, 5> ledControl;
+TricolourControl<constants::RED_PIN, constants::GREEN_PIN, constants::BLUE_PIN> ledControl;
+//MotorDriver<constants::MOTOR_ENABLE, constants::MOTOR_R1, constants::MOTOR_R2> motorDriver;
 
-// MotorDriver<1, 2, 3> motorDriver;
 std::unique_ptr<CardAccessManager<constants::SS_RFID, constants::RESET_RFID>>
     cardAccessManager;
 
@@ -37,9 +37,20 @@ void setup()
   };
 
   cardAccessManager.reset(new CardAccessManager<constants::SS_RFID, constants::RESET_RFID>(std::move(cardRegistry), onApproved, onDenied));
+
+  //motorDriver.drive(hardware::Forward{}, 50);
+
+  PinControl<constants::MOTOR_ENABLE, Pin::WriteMode> enable{};
+  PinControl<constants::MOTOR_R1, Pin::WriteMode> r1;
+  PinControl<constants::MOTOR_R2, Pin::WriteMode> r2;
+
+  enable.high();
+  r1.high();
+  r2.low();
 }
 
 void loop()
 {
-  cardAccessManager->run();
+
+  //cardAccessManager->run();
 }
