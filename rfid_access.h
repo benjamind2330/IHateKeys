@@ -5,6 +5,7 @@
 #include <MFRC522.h>
 
 #include <vector>
+#include <functional>
 
 struct CardData
 {
@@ -123,3 +124,68 @@ std_bp::Optional<CardData> CardRegistry::card(Uuid id) const noexcept
   }
   return {};
 }
+
+template <hardware::Pin::Id SS_PIN, hardware::Pin::Id RST_PIN>
+class CardAccessManager
+{
+
+public:
+  using DispatchAction = std::function<void(CardData)>;
+
+  CardAccessManager(CardRegistry &&cardRegistry,
+                    DispatchAction onRegisteredCard,
+                    DispatchAction onUnregisteredCard) : cardRegistry_(std::move(cardRegistry)),
+                                                         onRegisteredCard_{onRegisteredCard},
+                                                         onUnregisteredCard_{onUnregisteredCard},
+                                                         mfrc522_(SS_PIN, RST_PIN)
+
+  {
+    SPI.begin();
+    delay(STARTUP_DELAY_TIME);
+    mfrc522_.PCD_Init();
+    delay(STARTUP_DELAY_TIME);
+    mfrc522_.PCD_DumpVersionToSerial();
+    Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
+  }
+
+  void run()
+  {
+
+    if (!mfrc522_.PICC_IsNewCardPresent())
+    {
+      return;
+    }
+
+    if (!mfrc522_.PICC_ReadCardSerial())
+    {
+      return;
+    }
+
+    auto tag = Uuid::make_uuid(std::begin(mfrc522_.uid.uidByte), std::begin(mfrc522_.uid.uidByte) + mfrc522_.uid.size);
+
+    Serial.println("Tag " + toString(tag));
+    auto card = cardRegistry_.card(tag);
+
+    if (card)
+    {
+      onRegisteredCard_(*card);
+    }
+    else
+    {
+      auto invalidCard = CardData{tag, "Unknown", CardData::Type::UNKNOWN};
+      onUnregisteredCard_(invalidCard);
+    }
+  }
+
+private:
+  struct NoAction
+  {
+    void operator()(CardData){};
+  };
+
+  static constexpr unsigned STARTUP_DELAY_TIME = 100; //ms
+  MFRC522 mfrc522_;
+  CardRegistry cardRegistry_{};
+  DispatchAction onRegisteredCard_{NoAction{}};
+  DispatchAction onUnregisteredCard_{NoAction{}};
+};
