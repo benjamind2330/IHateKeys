@@ -2,13 +2,13 @@
 #include "rfid_access.h"
 #include "motor_driver.h"
 #include "constants.h"
-
+#include "pin_control.h"
 #include <memory>
 
 using namespace hardware;
 
 TricolourControl<constants::RED_PIN, constants::GREEN_PIN, constants::BLUE_PIN> ledControl;
-//MotorDriver<constants::MOTOR_ENABLE, constants::MOTOR_R1, constants::MOTOR_R2> motorDriver;
+MotorDriver<constants::MOTOR_ENABLE, constants::MOTOR_R1, constants::MOTOR_R2> motorDriver;
 
 std::unique_ptr<CardAccessManager<constants::SS_RFID, constants::RESET_RFID>>
     cardAccessManager;
@@ -16,6 +16,9 @@ std::unique_ptr<CardAccessManager<constants::SS_RFID, constants::RESET_RFID>>
 void setup()
 {
   Serial.begin(9600);
+  while (!Serial)
+  {
+  }
 
   ledControl.disable();
 
@@ -30,27 +33,31 @@ void setup()
   };
 
   auto onDenied = [](CardData card) {
-    Serial.print("Denied ID: " + toString(card.id));
+    Serial.println("Denied ID: " + toString(card.id));
     ledControl.enable(Led::Colour::RED);
     delay(3000);
     ledControl.disable();
   };
 
   cardAccessManager.reset(new CardAccessManager<constants::SS_RFID, constants::RESET_RFID>(std::move(cardRegistry), onApproved, onDenied));
-
-  //motorDriver.drive(hardware::Forward{}, 50);
-
-  PinControl<constants::MOTOR_ENABLE, Pin::WriteMode> enable{};
-  PinControl<constants::MOTOR_R1, Pin::WriteMode> r1;
-  PinControl<constants::MOTOR_R2, Pin::WriteMode> r2;
-
-  enable.high();
-  r1.high();
-  r2.low();
 }
+
+bool forward = true;
 
 void loop()
 {
+  //  cardAccessManager->run();
 
-  //cardAccessManager->run();
+  // if (forward)
+  // {
+  //   motorDriver.drive(Forward{}, 50);
+  //   forward = false;
+  // }
+  // else
+  // {
+  //   motorDriver.drive(Reverse{}, 100);
+  //   forward = true;
+  // }
+
+  // delay(1000);
 }

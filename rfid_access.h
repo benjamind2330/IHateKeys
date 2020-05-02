@@ -137,15 +137,13 @@ public:
                     DispatchAction onUnregisteredCard) : cardRegistry_(std::move(cardRegistry)),
                                                          onRegisteredCard_{onRegisteredCard},
                                                          onUnregisteredCard_{onUnregisteredCard},
-                                                         mfrc522_(SS_PIN, RST_PIN)
+                                                         mfrc522_(SS_PIN, 255)
 
   {
     SPI.begin();
     delay(STARTUP_DELAY_TIME);
     mfrc522_.PCD_Init();
     delay(STARTUP_DELAY_TIME);
-    mfrc522_.PCD_DumpVersionToSerial();
-    Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
   }
 
   void run()
@@ -162,8 +160,6 @@ public:
     }
 
     auto tag = Uuid::make_uuid(std::begin(mfrc522_.uid.uidByte), std::begin(mfrc522_.uid.uidByte) + mfrc522_.uid.size);
-
-    Serial.println("Tag " + toString(tag));
     auto card = cardRegistry_.card(tag);
 
     if (card)
