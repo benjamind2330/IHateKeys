@@ -58,7 +58,9 @@ namespace hardware
     private:
         Pin::AnalogValue percentageToPinVal(Percentage percentage) const
         {
-            return static_cast<Pin::AnalogValue>(percentage / 100.0f * std::numeric_limits<Pin::AnalogValue>::max());
+            auto val = static_cast<Pin::AnalogValue>(std::abs(percentage) / 100.0f * PWMRANGE);
+            Serial.println("Creating analog val " + String(val));
+            return val;
         }
 
         PinControl<ENABLE, Pin::WriteMode> enable_{};

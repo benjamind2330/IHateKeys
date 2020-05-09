@@ -42,22 +42,14 @@ void setup()
   cardAccessManager.reset(new CardAccessManager<constants::SS_RFID, constants::RESET_RFID>(std::move(cardRegistry), onApproved, onDenied));
 }
 
-bool forward = true;
+int val = 0;
 
 void loop()
 {
-  //  cardAccessManager->run();
 
-  // if (forward)
-  // {
-  //   motorDriver.drive(Forward{}, 50);
-  //   forward = false;
-  // }
-  // else
-  // {
-  //   motorDriver.drive(Reverse{}, 100);
-  //   forward = true;
-  // }
+  motorDriver.drive(Reverse{}, val);
+  val = (val + 1) % 100;
+  delay(400);
 
-  // delay(1000);
+  //cardAccessManager->run();
 }
