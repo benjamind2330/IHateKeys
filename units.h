@@ -48,7 +48,7 @@ namespace units
     ToCurrent current_cast(const Current<Rep, Period> &d)
     {
         using Convert = std::ratio_divide<Period, typename ToCurrent::period>;
-        return ToCurrent{d.count() * static_cast<Rep>(Convert::num) / static_cast<Rep>(Convert::den)};
+        return ToCurrent{static_cast<typename ToCurrent::rep>(d.count() * static_cast<long double>(Convert::num) / Convert::den)};
     }
 
     inline namespace literals
@@ -71,3 +71,53 @@ namespace units
     } // namespace literals
 
 } // namespace units
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator<(const units::Current<Rep1, Period1> &lhs,
+                         const units::Current<Rep2, Period2> &rhs)
+{
+    using CommmonRep = typename std::common_type<Rep1, Rep2>::type;
+    using LargerRatio = typename std::conditional<std::ratio_less<Period1, Period2>::value, Period1, Period2>::type;
+    using NewCurrent = units::Current<CommmonRep, LargerRatio>;
+
+    return units::current_cast<NewCurrent>(lhs).count() < units::current_cast<NewCurrent>(rhs).count();
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator==(const units::Current<Rep1, Period1> &lhs,
+                          const units::Current<Rep2, Period2> &rhs)
+{
+    using CommmonRep = typename std::common_type<Rep1, Rep2>::type;
+    using LargerRatio = typename std::conditional<std::ratio_less<Period1, Period2>::value, Period1, Period2>::type;
+    using NewCurrent = units::Current<CommmonRep, LargerRatio>;
+
+    return units::current_cast<NewCurrent>(lhs).count() == units::current_cast<NewCurrent>(rhs).count();
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator!=(const units::Current<Rep1, Period1> &lhs,
+                          const units::Current<Rep2, Period2> &rhs)
+{
+    return !(lhs == rhs);
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator>(const units::Current<Rep1, Period1> &lhs,
+                         const units::Current<Rep2, Period2> &rhs)
+{
+    return !(lhs < rhs) && lhs != rhs;
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator<=(const units::Current<Rep1, Period1> &lhs,
+                          const units::Current<Rep2, Period2> &rhs)
+{
+    return !(lhs > rhs);
+}
+
+template <class Rep1, class Period1, class Rep2, class Period2>
+constexpr bool operator>=(const units::Current<Rep1, Period1> &lhs,
+                          const units::Current<Rep2, Period2> &rhs)
+{
+    return !(lhs < rhs);
+}

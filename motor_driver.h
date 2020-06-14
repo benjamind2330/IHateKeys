@@ -86,10 +86,26 @@ namespace hardware
             return nullptr;
         }
 
-        units::MilliAmps current()
+        static std::unique_ptr<MotorSense> create(TwoWire &i2cWire, units::MilliAmps stallCurrent)
+        {
+            std::unique_ptr<MotorSense> output{new MotorSense(i2cWire, stallCurrent)};
+            if (output->valid_)
+            {
+                return output;
+            }
+
+            return nullptr;
+        }
+
+        units::MilliAmps current() const
         {
             auto val = units::MilliAmps::rep{ina219_.getCurrent_mA()};
             return units::MilliAmps{val};
+        }
+
+        bool stalled() const
+        {
+            return current() >= stallCurrent_;
         }
 
         void printDetails()
@@ -136,8 +152,14 @@ namespace hardware
             valid_ = true;
         }
 
+        MotorSense(TwoWire &i2cWire, units::MilliAmps stallCurrent) : MotorSense{i2cWire}
+        {
+            stallCurrent_ = stallCurrent;
+        }
+
+        units::MilliAmps stallCurrent_{std::numeric_limits<units::MilliAmps::rep>::max()};
         bool valid_ = false;
-        Adafruit_INA219 ina219_;
+        mutable Adafruit_INA219 ina219_;
     };
 
 } // namespace hardware
