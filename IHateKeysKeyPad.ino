@@ -4,15 +4,16 @@
 #include "constants.h"
 #include "pin_control.h"
 #include "keypad.h"
+#include "door_actuation.h"
 #include <memory>
 
 using namespace hardware;
 using namespace units::literals;
 
-// TricolourControl<constants::RED_PIN, constants::GREEN_PIN, constants::BLUE_PIN> ledControl;
-MotorDriver<constants::MOTOR_ENABLE, constants::MOTOR_R1, constants::MOTOR_R2> motorDriver;
-std::unique_ptr<MotorSense> motor_sense;
+using LedControl = TricolourControl<constants::RED_PIN, constants::GREEN_PIN, constants::BLUE_PIN>;
+using MotorDrive = MotorDriver<constants::MOTOR_ENABLE, constants::MOTOR_R1, constants::MOTOR_R2>;
 std::unique_ptr<EntrySequence> entrySequence;
+std::unique_ptr<DoorActuation<LedControl, MotorDrive>> doorActuation;
 
 void setup()
 {
@@ -21,8 +22,8 @@ void setup()
   {
   }
 
-  motor_sense = MotorSense::create(Wire, 200_mA);
-  if (!motor_sense)
+  auto motorSense = MotorSense::create(Wire, 200_mA);
+  if (!motorSense)
   {
     Serial.println("Keypad initialization failure.");
     while (1)
@@ -37,20 +38,17 @@ void setup()
       ;
   }
 
-  auto correct = []() {
-    Serial.println("Opening!\n");
-    return true;
+  doorActuation.reset(new DoorActuation<LedControl, MotorDrive>(std::move(motorSense)));
+
+  auto correct = [&doorActuation]() {
+    return doorActuation->open();
   };
 
-  auto incorrect = []() {
-    Serial.println("Wrong Code!\n");
-    return true;
+  auto incorrect = [&]() {
+    return doorActuation->rejectAccess();
   };
 
-  entrySequence.reset(new EntrySequence(std::move(keypad), 2000, correct, incorrect));
-
-  // ledControl.disable();
-  motorDriver.drive(Forward{}, 150);
+  entrySequence.reset(new EntrySequence(std::move(keypad), constants::KEYPAD_TIMEOUT, correct, incorrect));
 }
 
 int run = 0;

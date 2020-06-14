@@ -146,7 +146,7 @@ private:
 class Code
 {
 public:
-    using value_type = uint32_t;
+    using value_type = uint64_t;
     Code() = default;
     Code(value_type digits) : digits_{digits}
     {
