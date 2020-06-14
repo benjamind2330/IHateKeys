@@ -59,6 +59,20 @@ namespace hardware
         {
             digitalWrite(PIN, LOW);
         }
+
+        template <typename U = TMode,
+                  std::enable_if_t<std::is_same<U, Pin::ReadMode>::value, int> = 0>
+        bool isHigh() noexcept
+        {
+            return digitalRead(PIN);
+        }
+
+        template <typename U = TMode,
+                  std::enable_if_t<std::is_same<U, Pin::ReadMode>::value, int> = 0>
+        int read() noexcept
+        {
+            return analogRead(PIN);
+        }
     };
 
 } // namespace hardware

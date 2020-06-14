@@ -1,3 +1,4 @@
+#pragma once
 #include "uuid.h"
 #include "optional.h"
 

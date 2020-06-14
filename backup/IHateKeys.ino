@@ -13,6 +13,8 @@ MotorDriver<constants::MOTOR_ENABLE, constants::MOTOR_R1, constants::MOTOR_R2> m
 std::unique_ptr<CardAccessManager<constants::SS_RFID, constants::RESET_RFID>>
     cardAccessManager;
 
+PinControl<constants::CURRENT_SENSE_PIN, Pin::ReadMode> sensePin;
+
 void setup()
 {
   Serial.begin(9600);
@@ -40,16 +42,14 @@ void setup()
   };
 
   cardAccessManager.reset(new CardAccessManager<constants::SS_RFID, constants::RESET_RFID>(std::move(cardRegistry), onApproved, onDenied));
+  motorDriver.drive(Forward{}, 150);
 }
-
-int val = 0;
 
 void loop()
 {
+  cardAccessManager->run();
 
-  motorDriver.drive(Reverse{}, val);
-  val = (val + 1) % 100;
-  delay(400);
-
-  //cardAccessManager->run();
+  auto val = sensePin.read();
+  Serial.println(String(val));
+  delay(500);
 }
